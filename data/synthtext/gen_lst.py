@@ -3,10 +3,8 @@ import os, sys
 import util
 from PIL import Image
 
-trainval_dir = util.io.get_absolute_path("~/dataset/ICDAR2015/Challenge2.Task123/Challenge2_Training_Task12_Images")
-test_dir = util.io.get_absolute_path("~/dataset/ICDAR2015/Challenge2.Task123/Challenge2_Test_Task12_Images")
+trainval_dir = util.io.get_absolute_path("~/dataset/SynthText")
 
-trainval_img_lists = util.io.ls(trainval_dir, '.jpg')
 trainval_img_names = []
 for item in trainval_img_lists:
     temp1, temp2 = os.path.splitext(os.path.basename(item))

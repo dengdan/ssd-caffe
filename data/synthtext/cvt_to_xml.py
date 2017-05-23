@@ -102,7 +102,7 @@ class SynthTextDataFetcher():
 
 
 def cvt_to_xmls(output_path , data_path, gt_path):
-
+    trainval_fd = open("trainval.txt", 'w')
     fetcher = SynthTextDataFetcher(root_path = data_path, mat_path = gt_path)
     image_idx = -1
     while image_idx < fetcher.num_images:
@@ -116,7 +116,7 @@ def cvt_to_xmls(output_path , data_path, gt_path):
             continue;
         image_path, image, txts, rect_bboxes= record;
         height, width = image.shape[0:-1]
-        
+                
         labels = len(rect_bboxes) * [1];
         difficult = len(rect_bboxes) * [0];
         truncated = len(rect_bboxes) * [0];
@@ -124,7 +124,9 @@ def cvt_to_xmls(output_path , data_path, gt_path):
         # write in xml file
         image_dir = util.io.get_dir(image_path)
         image_name = util.io.get_filename(image_path)
-        xml_file = open((output_path + '/' + image_name.split('.')[0] + '.xml'), 'w')
+        xml_path = image_name.split('.')[0] + '.xml'
+        trainval_fd.write(image_path + ' ' + 'xml/' + xml_path + '\n')
+        xml_file = open(util.io.join_path(output_dir, xml_path), 'w')
         xml_file.write('<annotation>\n')
         xml_file.write('    <folder>%s</folder>\n'%(image_dir))
         xml_file.write('    <filename>' + str(image_name) + '</filename>\n')
