@@ -116,7 +116,7 @@ def cvt_to_xmls(output_path , data_path, gt_path):
             continue;
         image_path, image, txts, rect_bboxes= record;
         h, w = image.shape[0:-1]
-        xmin, ymin, xmax, ymax = rect_bbox;
+        
         labels = len(rect_bboxes) * [1];
         difficult = len(rect_bboxes) * [0];
         truncated = len(rect_bboxes) * [0];
@@ -133,12 +133,10 @@ def cvt_to_xmls(output_path , data_path, gt_path):
         xml_file.write('        <height>' + str(height) + '</height>\n')
         xml_file.write('        <depth>3</depth>\n')
         xml_file.write('    </size>\n')
-
+        
         # write the region of text on xml file
-        for img_each_label in gt:
-            spt = img_each_label.split(' ')
-            locs = spt[0: -1]
-            xmin, ymin, xmax, ymax = locs        
+        for bbox in rect_bboxes:
+            xmin, ymin, xmax, ymax = bbox
             xml_file.write('    <object>\n')
             xml_file.write('        <name>text</name>\n')
             xml_file.write('        <pose>Unspecified</pose>\n')
