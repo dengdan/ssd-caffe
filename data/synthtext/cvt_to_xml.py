@@ -115,7 +115,7 @@ def cvt_to_xmls(output_path , data_path, gt_path):
             print '\nimage %d does not exist'%(image_idx + 1)
             continue;
         image_path, image, txts, rect_bboxes= record;
-        h, w = image.shape[0:-1]
+        height, width = image.shape[0:-1]
         
         labels = len(rect_bboxes) * [1];
         difficult = len(rect_bboxes) * [0];
