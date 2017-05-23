@@ -124,7 +124,7 @@ def cvt_to_xmls(output_path , data_path, gt_path):
         # write in xml file
         image_dir = util.io.get_dir(image_path)
         image_name = util.io.get_filename(image_path)
-        xml_file = open((output_path + '/' + image_idx + '.xml'), 'w')
+        xml_file = open((output_path + '/' + image_name.split('.')[0] + '.xml'), 'w')
         xml_file.write('<annotation>\n')
         xml_file.write('    <folder>%s</folder>\n'%(image_dir))
         xml_file.write('    <filename>' + str(image_name) + '</filename>\n')
