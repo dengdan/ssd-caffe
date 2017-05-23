@@ -4,8 +4,8 @@ root_dir=$cur_dir/../..
 cd $root_dir
 
 redo=1
-data_root_dir="$HOME/dataset/ICDAR2015/Challenge4"
-dataset_name="icdar"
+data_root_dir="$HOME/dataset/ICDAR2015/Challenge2.Task123"
+dataset_name="icdar2013"
 mapfile="$root_dir/data/$dataset_name/labelmap.prototxt"
 anno_type="detection"
 db="lmdb"
