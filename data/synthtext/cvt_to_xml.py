@@ -116,7 +116,7 @@ def cvt_to_xmls(output_path , data_path, gt_path):
             continue;
         image_path, image, txts, rect_bboxes= record;
         h, w = image.shape[0:-1]
-        xmin, ymin, xmax, ymax = bbox;
+        xmin, ymin, xmax, ymax = rect_bbox;
         labels = len(rect_bboxes) * [1];
         difficult = len(rect_bboxes) * [0];
         truncated = len(rect_bboxes) * [0];
