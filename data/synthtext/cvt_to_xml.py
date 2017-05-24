@@ -22,7 +22,7 @@ class SynthTextDataFetcher():
 
     def get_image_path(self, idx):
         image_path = util.io.join_path(self.root_path, self.image_paths[idx][0])
-        return image_path
+        return image_path, self.image_paths[idx][0]
 
     def get_num_words(self, idx):
         try:
@@ -77,7 +77,7 @@ class SynthTextDataFetcher():
         
         
     def fetch_record(self, image_idx):
-        image_path = self.get_image_path(image_idx)
+        image_path, sub_path = self.get_image_path(image_idx)
         if not (util.io.exists(image_path)):
             return None;
         img = util.img.imread(image_path)
@@ -96,13 +96,14 @@ class SynthTextDataFetcher():
         if len(rect_bboxes) == 0:
             return None;
         
-        return image_path, img, txts, rect_bboxes
+        return sub_path, img, txts, rect_bboxes
     
         
 
 
 def cvt_to_xmls(output_path , data_path, gt_path):
-    trainval_fd = open("trainval.txt", 'w')
+    trainval_file = open("trainval.txt", 'w')
+    test_name_size_file = open('test_name_size.txt', 'w')
     fetcher = SynthTextDataFetcher(root_path = data_path, mat_path = gt_path)
     image_idx = -1
     while image_idx < fetcher.num_images:
@@ -121,11 +122,13 @@ def cvt_to_xmls(output_path , data_path, gt_path):
         difficult = len(rect_bboxes) * [0];
         truncated = len(rect_bboxes) * [0];
         
+        # write size file
+        test_name_size_file.write(image_path + ' ' + str(height) + ' ' + str(width) + '\n')
         # write in xml file
         image_dir = util.io.get_dir(image_path)
         image_name = util.io.get_filename(image_path)
         xml_path = image_name.split('.')[0] + '.xml'
-        trainval_fd.write(image_path + ' ' + 'xml/' + xml_path + '\n')
+        trainval_file.write(image_path + ' ' + 'xml/' + xml_path + '\n')
         xml_file = open(util.io.join_path(output_dir, xml_path), 'w')
         xml_file.write('<annotation>\n')
         xml_file.write('    <folder>%s</folder>\n'%(image_dir))

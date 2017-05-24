@@ -78,10 +78,10 @@ resume_training = True
 # If true, Remove old model files.
 remove_old_models = False
 
-# The database file for training data. Created by data/icdar/create_data.sh
-train_data = "/home/dengdan/github/ssd/caffe/examples/icdar/icdar_trainval_lmdb"
-# The database file for testing data. Created by data/icdar/create_data.sh
-test_data = "/home/dengdan/github/ssd/caffe/examples/icdar/icdar_test_lmdb"
+# The database file for training data. Created by data/icdar2013/create_data.sh
+train_data = "/home/dengdan/github/ssd/caffe/examples/icdar2013/icdar2013_trainval_lmdb"
+# The database file for testing data. Created by data/icdar2013/create_data.sh
+test_data = "/home/dengdan/github/ssd/caffe/examples/icdar2013/icdar2013_test_lmdb"
 # Specify the batch sampler.
 resize_width = 512
 resize_height = 512
@@ -233,16 +233,16 @@ else:
 # Modify the job name if you want.
 job_name = "SSD_{}".format(resize)
 # The name of the model. Modify it if you want.
-model_name = "VGG_icdar_{}".format(job_name)
+model_name = "VGG_icdar2013_{}".format(job_name)
 
 # Directory which stores the model .prototxt file.
-save_dir = "models/VGGNet/icdar/{}".format(job_name)
+save_dir = "models/VGGNet/icdar2013/{}".format(job_name)
 # Directory which stores the snapshot of models.
-snapshot_dir = "models/VGGNet/icdar/{}".format(job_name)
+snapshot_dir = "models/VGGNet/icdar2013/{}".format(job_name)
 # Directory which stores the job script and log file.
-job_dir = "jobs/VGGNet/icdar/{}".format(job_name)
+job_dir = "jobs/VGGNet/icdar2013/{}".format(job_name)
 # Directory which stores the detection results.
-output_result_dir = "{}/temp_nfs/results/icdar/{}".format(os.environ['HOME'], job_name)
+output_result_dir = "{}/temp_nfs/results/icdar2013/{}".format(os.environ['HOME'], job_name)
 
 # model definition files.
 train_net_file = "{}/train.prototxt".format(save_dir)
@@ -254,12 +254,12 @@ snapshot_prefix = "{}/{}".format(snapshot_dir, model_name)
 # job script path.
 job_file = "{}/{}.sh".format(job_dir, model_name)
 
-# Stores the test image names and sizes. Created by data/icdar/create_list.sh
-name_size_file = "data/icdar/test_name_size.txt"
+# Stores the test image names and sizes. Created by data/icdar2013/create_list.sh
+name_size_file = "data/icdar2013/test_name_size.txt"
 # The pretrained model. We use the Fully convolutional reduced (atrous) VGGNet.
-pretrain_model = "models/VGGNet/VGG_ILSVRC_16_layers_fc_reduced.caffemodel"
+pretrain_model = "models/VGG_ILSVRC_16_layers_fc_reduced.caffemodel"
 # Stores LabelMapItem.
-label_map_file = "data/icdar/labelmap.prototxt"
+label_map_file = "data/icdar2013/labelmap.prototxt"
 
 # MultiBoxLoss parameters.
 num_classes = 2
@@ -329,7 +329,7 @@ clip = False
 
 # Solver parameters.
 # Defining which GPUs to use.
-gpus = "2"
+gpus = "0"
 gpulist = gpus.split(",")
 num_gpus = len(gpulist)
 
@@ -356,7 +356,7 @@ elif normalization_mode == P.Loss.FULL:
   base_lr *= 2000.
 
 # Evaluate on whole test set.
-num_test_image = 1000
+num_test_image = 233
 test_batch_size = 1
 # Ideally test_batch_size should be divisible by num_test_image,
 # otherwise mAP will be slightly off the true value.
