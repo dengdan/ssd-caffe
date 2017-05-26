@@ -639,9 +639,11 @@ void MatchBBox(const vector<NormalizedBBox>& gt_bboxes,
     int max_idx = -1;
     int max_gt_idx = -1;
     float max_overlap = -1;
+    
+    // find the best match between preds and gts.
     for (map<int, map<int, float> >::iterator it = overlaps.begin();
-         it != overlaps.end(); ++it) {
-      int i = it->first;
+         it != overlaps.end(); ++it) {//it stands for the overlap between a predicted bbox and all gt bboxes
+      int i = it->first; // the idx of pred bbox
       if ((*match_indices)[i] != -1) {
         // The prediction already has matched ground truth or is ignored.
         continue;
@@ -745,8 +747,8 @@ void FindMatches(const vector<LabelBBox>& all_loc_preds,
   const bool ignore_cross_boundary_bbox =
       multibox_loss_param.ignore_cross_boundary_bbox();
   // Find the matches.
-  int num = all_loc_preds.size();
-  for (int i = 0; i < num; ++i) {
+  int num = all_loc_preds.size();// number of images
+  for (int i = 0; i < num; ++i) {//i for image index
     map<int, vector<int> > match_indices;
     map<int, vector<float> > match_overlaps;
     // Check if there is ground truth for current image.
@@ -777,12 +779,12 @@ void FindMatches(const vector<LabelBBox>& all_loc_preds,
       }
     } else {
       // Use prior bboxes to match against all ground truth.
-      vector<int> temp_match_indices;
+      vector<int> temp_match_indices;//size = num_pred
       vector<float> temp_match_overlaps;
       const int label = -1;
       MatchBBox(gt_bboxes, prior_bboxes, label, match_type, overlap_threshold,
                 ignore_cross_boundary_bbox, &temp_match_indices,
-                &temp_match_overlaps);
+                &temp_match_overlaps); //gt bbox index in temp_match_indices
       if (share_location) {
         match_indices[label] = temp_match_indices;
         match_overlaps[label] = temp_match_overlaps;
@@ -812,7 +814,7 @@ void FindMatches(const vector<LabelBBox>& all_loc_preds,
         }
       }
     }
-    all_match_indices->push_back(match_indices);
+    all_match_indices->push_back(match_indices);//match_indices = {-1:matched_indexes}
     all_match_overlaps->push_back(match_overlaps);
   }
 }
@@ -849,15 +851,15 @@ inline bool IsEligibleMining(const MiningType mining_type, const int match_idx,
 template <typename Dtype>
 void MineHardExamples(const Blob<Dtype>& conf_blob,
     const vector<LabelBBox>& all_loc_preds,
-    const map<int, vector<NormalizedBBox> >& all_gt_bboxes,
+    const map<int, vector<NormalizedBBox> >& all_gt_bboxes, //key: image_idx
     const vector<NormalizedBBox>& prior_bboxes,
     const vector<vector<float> >& prior_variances,
-    const vector<map<int, vector<float> > >& all_match_overlaps,
+    const vector<map<int, vector<float> > >& all_match_overlaps, // size of vector: num_images, key of map: label -1, size of value vector: num_anchors.
     const MultiBoxLossParameter& multibox_loss_param,
     int* num_matches, int* num_negs,
-    vector<map<int, vector<int> > >* all_match_indices,
+    vector<map<int, vector<int> > >* all_match_indices,// already calculated before passed, but can be modified, although not modified in ssd.
     vector<vector<int> >* all_neg_indices) {
-  int num = all_loc_preds.size();
+  int num = all_loc_preds.size();//number of images
   // CHECK_EQ(num, all_match_overlaps.size());
   // CHECK_EQ(num, all_match_indices->size());
   // all_neg_indices->clear();
@@ -895,7 +897,7 @@ void MineHardExamples(const Blob<Dtype>& conf_blob,
 #ifdef CPU_ONLY
   ComputeConfLoss(conf_blob.cpu_data(), num, num_priors, num_classes,
       background_label_id, conf_loss_type, *all_match_indices, all_gt_bboxes,
-      &all_conf_loss);
+      &all_conf_loss);//this loss calculation is quite normal, using a softmax to get the probability of being correctly classified.
 #else
   ComputeConfLossGPU(conf_blob, num, num_priors, num_classes,
       background_label_id, conf_loss_type, *all_match_indices, all_gt_bboxes,
@@ -926,7 +928,7 @@ void MineHardExamples(const Blob<Dtype>& conf_blob,
     }
   }
   for (int i = 0; i < num; ++i) {
-    map<int, vector<int> >& match_indices = (*all_match_indices)[i];
+    map<int, vector<int> >& match_indices = (*all_match_indices)[i];//in a single image
     const map<int, vector<float> >& match_overlaps = all_match_overlaps[i];
     // loc + conf loss.
     const vector<float>& conf_loss = all_conf_loss[i];
@@ -942,28 +944,30 @@ void MineHardExamples(const Blob<Dtype>& conf_blob,
       const int label = it->first;
       int num_sel = 0;
       // Get potential indices and loss pairs.
+      // Get the number of negative examples to be selected.
       vector<pair<float, int> > loss_indices;
       for (int m = 0; m < match_indices[label].size(); ++m) {
         if (IsEligibleMining(mining_type, match_indices[label][m],
             match_overlaps.find(label)->second[m], neg_overlap)) {
           loss_indices.push_back(std::make_pair(loss[m], m));
-          ++num_sel;
+          ++num_sel;//the number of negative examples
         }
       }
       if (mining_type == MultiBoxLossParameter_MiningType_MAX_NEGATIVE) {
         int num_pos = 0;
         for (int m = 0; m < match_indices[label].size(); ++m) {
           if (match_indices[label][m] > -1) {
-            ++num_pos;
+            ++num_pos;//number of positive examples
           }
         }
-        num_sel = std::min(static_cast<int>(num_pos * neg_pos_ratio), num_sel);
+        num_sel = std::min(static_cast<int>(num_pos * neg_pos_ratio), num_sel);//number of selected negative examples
       } else if (mining_type == MultiBoxLossParameter_MiningType_HARD_EXAMPLE) {
         CHECK_GT(sample_size, 0);
         num_sel = std::min(sample_size, num_sel);
       }
+      
       // Select samples.
-      if (has_nms_param && nms_threshold > 0) {
+      if (has_nms_param && nms_threshold > 0) {// not in ssd
         // Do nms before selecting samples.
         vector<float> sel_loss;
         vector<NormalizedBBox> sel_bboxes;
@@ -1001,7 +1005,7 @@ void MineHardExamples(const Blob<Dtype>& conf_blob,
         for (int n = 0; n < num_sel; ++n) {
           sel_indices.insert(loss_indices[nms_indices[n]].second);
         }
-      } else {
+      } else {// ssd here
         // Pick top example indices based on loss.
         std::sort(loss_indices.begin(), loss_indices.end(),
                   SortScorePairDescend<int>);
@@ -1010,15 +1014,15 @@ void MineHardExamples(const Blob<Dtype>& conf_blob,
         }
       }
       // Update the match_indices and select neg_indices.
-      for (int m = 0; m < match_indices[label].size(); ++m) {
+      for (int m = 0; m < match_indices[label].size(); ++m) {// m is the index of anchor box
         if (match_indices[label][m] > -1) {
           if (mining_type == MultiBoxLossParameter_MiningType_HARD_EXAMPLE &&
               sel_indices.find(m) == sel_indices.end()) {
             match_indices[label][m] = -1;
             *num_matches -= 1;
           }
-        } else if (match_indices[label][m] == -1) {
-          if (sel_indices.find(m) != sel_indices.end()) {
+        } else if (match_indices[label][m] == -1) {//ssd here. The matched label of this anchor being -1 means matched.
+          if (sel_indices.find(m) != sel_indices.end()) {// and the anchor is selected as as a negative example
             neg_indices.push_back(m);
             *num_negs += 1;
           }
@@ -1138,13 +1142,13 @@ void GetLocPredictions(const Dtype* loc_data, const int num,
   if (share_location) {
     CHECK_EQ(num_loc_classes, 1);
   }
-  loc_preds->resize(num);
+  loc_preds->resize(num);//there are a same number of prior boxes and bbox predictions.
   for (int i = 0; i < num; ++i) {
-    LabelBBox& label_bbox = (*loc_preds)[i];
-    for (int p = 0; p < num_preds_per_class; ++p) {
+    LabelBBox& label_bbox = (*loc_preds)[i];//typedef map<int, vector<NormalizedBBox> > LabelBBox;
+    for (int p = 0; p < num_preds_per_class; ++p) {//num_preds_per_class is num_prioris
       int start_idx = p * num_loc_classes * 4;
-      for (int c = 0; c < num_loc_classes; ++c) {
-        int label = share_location ? -1 : c;
+      for (int c = 0; c < num_loc_classes; ++c) {//num_loc_classes=1 when share_location is true
+        int label = share_location ? -1 : c; // label == -1
         if (label_bbox.find(label) == label_bbox.end()) {
           label_bbox[label].resize(num_preds_per_class);
         }
@@ -1578,11 +1582,11 @@ void EncodeConfPrediction(const Dtype* conf_data, const int num,
           match_indices.begin(); it != match_indices.end(); ++it) {
         const vector<int>& match_index = it->second;
         CHECK_EQ(match_index.size(), num_priors);
-        for (int j = 0; j < num_priors; ++j) {
+        for (int j = 0; j < num_priors; ++j) {//j is the index of prior box
           if (match_index[j] <= -1) {
             continue;
           }
-          const int gt_label = map_object_to_agnostic ?
+          const int gt_label = map_object_to_agnostic ? // 1
             background_label_id + 1 :
             all_gt_bboxes.find(i)->second[match_index[j]].label();
           int idx = do_neg_mining ? count : j;
@@ -1604,7 +1608,7 @@ void EncodeConfPrediction(const Dtype* conf_data, const int num,
           }
         }
       }
-      // Go to next image.
+      // \\Wrong comment:Go to next image.
       if (do_neg_mining) {
         // Save negative bboxes scores and labels.
         for (int n = 0; n < all_neg_indices[i].size(); ++n) {

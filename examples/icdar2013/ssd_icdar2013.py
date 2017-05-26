@@ -79,7 +79,10 @@ resume_training = True
 remove_old_models = False
 
 # The database file for training data. Created by data/icdar2013/create_data.sh
-train_data = "/home/dengdan/github/ssd-caffe/examples/icdar2013/icdar2013_trainval_lmdb"
+split = sys.argv[1]
+gpus = sys.argv[2]
+batch_size = int(sys.argv[3])
+train_data = "/home/dengdan/github/ssd-caffe/examples/icdar2013/%s_trainval_lmdb"%(split)
 # The database file for testing data. Created by data/icdar2013/create_data.sh
 test_data = "/home/dengdan/github/ssd-caffe/examples/icdar2013/icdar2013_test_lmdb"
 # Specify the batch sampler.
@@ -229,7 +232,7 @@ if use_batchnorm:
     base_lr = 0.0004
 else:
     # A learning rate for batch_size = 1, num_gpus = 1.
-    base_lr = 0.0000004
+    base_lr = 0.000004
 # Modify the job name if you want.
 job_name = "SSD_{}".format(resize)
 # The name of the model. Modify it if you want.
@@ -265,7 +268,7 @@ label_map_file = "data/icdar2013/labelmap.prototxt"
 num_classes = 2
 share_location = True
 background_label_id=0
-train_on_diff_gt = True
+train_on_diff_gt = False
 normalization_mode = P.Loss.VALID
 code_type = P.PriorBox.CENTER_SIZE
 ignore_cross_boundary_bbox = False
@@ -295,7 +298,7 @@ loss_param = {
 
 # parameters for generating priors.
 # minimum dimension of input image
-min_dim = 300
+min_dim = min(resize_height, resize_width)
 # conv4_3 ==> 38 x 38
 # fc7 ==> 19 x 19
 # conv6_2 ==> 10 x 10
@@ -315,8 +318,8 @@ for ratio in xrange(min_ratio, max_ratio + 1, step):
 min_sizes = [min_dim * 10 / 100.] + min_sizes
 max_sizes = [min_dim * 20 / 100.] + max_sizes
 steps = [8, 16, 32, 64, 100, 300]
-aspect_ratios = [[2, 4], [2, 5], [2, 5], [2, 5], [2, 6], [2, 9]]
-aspect_ratios = [[2], [2, 3], [2, 3], [2, 3], [2], [2]]
+aspect_ratios = [[2, 6, 10], [2, 6, 10], [2, 6, 10], [2, 6, 10], [2, 6], [2, 6]]
+#aspect_ratios = [[2], [2, 3], [2, 3], [2, 3], [2], [2]]
 # L2 normalize conv4_3.
 normalizations = [20, -1, -1, -1, -1, -1]
 # variance used to encode/decode prior bboxes.
@@ -324,17 +327,15 @@ if code_type == P.PriorBox.CENTER_SIZE:
   prior_variance = [0.1, 0.1, 0.2, 0.2]
 else:
   prior_variance = [0.1]
-flip = True
+flip = False
 clip = False
 
 # Solver parameters.
 # Defining which GPUs to use.
-gpus = "0,1,2"
 gpulist = gpus.split(",")
 num_gpus = len(gpulist)
 
 # Divide the mini-batch to different GPUs.
-batch_size = 27
 accum_batch_size = 1
 iter_size = accum_batch_size / batch_size
 solver_mode = P.Solver.CPU
@@ -372,7 +373,7 @@ solver_param = {
     'momentum': 0.9,
     'iter_size': iter_size,
     'max_iter': 120000,
-    'snapshot': 5000,
+    'snapshot': 2000,
     'display': 1,
     'average_loss': 10,
     'type': "SGD",

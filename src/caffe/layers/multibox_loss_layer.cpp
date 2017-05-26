@@ -145,13 +145,13 @@ void MultiBoxLossLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
 template <typename Dtype>
 void MultiBoxLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     const vector<Blob<Dtype>*>& top) {
-  const Dtype* loc_data = bottom[0]->cpu_data();
-  const Dtype* conf_data = bottom[1]->cpu_data();
-  const Dtype* prior_data = bottom[2]->cpu_data();
-  const Dtype* gt_data = bottom[3]->cpu_data();
+  const Dtype* loc_data = bottom[0]->cpu_data(); //(num_images, 4 * num_bboxes_pred)
+  const Dtype* conf_data = bottom[1]->cpu_data(); //(num_images, 2 * num_bboxes_pred)
+  const Dtype* prior_data = bottom[2]->cpu_data(); //shape = (1, 2, layer_width * layer_height * num_priors_ * 4), with [..., 0] loc values, [..., 1] variance values
+  const Dtype* gt_data = bottom[3]->cpu_data();//[img_idx1, label, unknown, xmin, ymin, xmax, ymax, difficult, ]
 
   // Retrieve all ground truth.
-  map<int, vector<NormalizedBBox> > all_gt_bboxes;
+  map<int, vector<NormalizedBBox> > all_gt_bboxes;//the key is img idx. The NormalizedBBox contains bbox label, and loc vlaues
   GetGroundTruth(gt_data, num_gt_, background_label_id_, use_difficult_gt_,
                  &all_gt_bboxes);
 
@@ -162,19 +162,19 @@ void MultiBoxLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   GetPriorBBoxes(prior_data, num_priors_, &prior_bboxes, &prior_variances);
 
   // Retrieve all predictions.
-  vector<LabelBBox> all_loc_preds;
+  vector<LabelBBox> all_loc_preds;//typedef map<int, vector<NormalizedBBox> > LabelBBox;
   GetLocPredictions(loc_data, num_, num_priors_, loc_classes_, share_location_,
-                    &all_loc_preds);
+                    &all_loc_preds);//num_ is the number of images, loc_classes_ = 1 when share_location is true
 
   // Find matches between source bboxes and ground truth bboxes.
-  vector<map<int, vector<float> > > all_match_overlaps;
-  FindMatches(all_loc_preds, all_gt_bboxes, prior_bboxes, prior_variances,
-              multibox_loss_param_, &all_match_overlaps, &all_match_indices_);
+  vector<map<int, vector<float> > > all_match_overlaps;//all_match_overlaps[0] a map, with key being label=-1, value being match_overlaps, whose size equals the number of anchors
+  FindMatches(all_loc_preds, all_gt_bboxes, prior_bboxes, prior_variances, //all_loc_preds is passed to get the number of images
+              multibox_loss_param_, &all_match_overlaps, &all_match_indices_);//all_match_indices_: vector<map<int, vector<int> > >* 
 
   num_matches_ = 0;
   int num_negs = 0;
   // Sample hard negative (and positive) examples based on mining type.
-  MineHardExamples(*bottom[1], all_loc_preds, all_gt_bboxes, prior_bboxes,
+  MineHardExamples(*bottom[1], all_loc_preds, all_gt_bboxes, prior_bboxes, //bottom[1] is loc_conf
                    prior_variances, all_match_overlaps, multibox_loss_param_,
                    &num_matches_, &num_negs, &all_match_indices_,
                    &all_neg_indices_);
@@ -199,7 +199,7 @@ void MultiBoxLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 
   // Form data to pass on to conf_loss_layer_.
   if (do_neg_mining_) {
-    num_conf_ = num_matches_ + num_negs;
+    num_conf_ = num_matches_ + num_negs;//usually, num_matches_ * 3 = num_negs_
   } else {
     num_conf_ = num_ * num_priors_;
   }
