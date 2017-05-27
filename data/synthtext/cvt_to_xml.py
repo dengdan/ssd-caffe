@@ -18,7 +18,7 @@ class SynthTextDataFetcher():
         self.image_paths = data['imnames'][0]
         self.image_bbox = data['wordBB'][0]
         self.txts = data['txt'][0]
-        self.num_images =  len(self.image_paths)
+        self.num_images = len(self.image_paths)
 
     def get_image_path(self, idx):
         image_path = util.io.join_path(self.root_path, self.image_paths[idx][0])
@@ -50,10 +50,10 @@ class SynthTextDataFetcher():
         max_y = max(ys)
         
         # bound them in the valid range
-        min_x = max(0, min_x)
-        min_y = max(0, min_y)
-        max_x = min(width, max_x)
-        max_y = min(height, max_y)
+        min_x = int(max(0, min_x))
+        min_y = int(max(0, min_y))
+        max_x = int(min(width, max_x))
+        max_y = int(min(height, max_y))
         
         # check the w, h and area of the rect
         w = max_x - min_x

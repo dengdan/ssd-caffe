@@ -30,8 +30,7 @@ model_path = util.io.get_absolute_path(model_path)
 caffe.set_mode_gpu()
 caffe.set_device(int(sys.argv[1]))
 logging.info('using GPU %d'%(int(sys.argv[1])))
-print util.io.cat('models/VGGNet/icdar2013/SSD_512x512/solver.prototxt')
-solver = caffe.SGDSolver('models/VGGNet/icdar2013/SSD_512x512/solver.prototxt')
+solver = caffe.SGDSolver('models/VGGNet/icdar2013/SSD_512x512_old/solver.debug.prototxt')
 solver.net.copy_from(model_path)
 
 for iteration in xrange(1000000):

@@ -232,7 +232,7 @@ if use_batchnorm:
     base_lr = 0.0004
 else:
     # A learning rate for batch_size = 1, num_gpus = 1.
-    base_lr = 0.000004
+    base_lr = 0.00001
 # Modify the job name if you want.
 job_name = "SSD_{}".format(resize)
 # The name of the model. Modify it if you want.
@@ -336,7 +336,7 @@ gpulist = gpus.split(",")
 num_gpus = len(gpulist)
 
 # Divide the mini-batch to different GPUs.
-accum_batch_size = 1
+accum_batch_size = 18
 iter_size = accum_batch_size / batch_size
 solver_mode = P.Solver.CPU
 device_id = 0
@@ -368,13 +368,13 @@ solver_param = {
     'base_lr': base_lr,
     'weight_decay': 0.0005,
     'lr_policy': "multistep",
-    'stepvalue': [1000, 20000, 400000, 120000],
+    'stepvalue': [16000, 20000, 360000],
     'gamma': 0.1,
     'momentum': 0.9,
     'iter_size': iter_size,
     'max_iter': 120000,
     'snapshot': 2000,
-    'display': 1,
+    'display': 10,
     'average_loss': 10,
     'type': "SGD",
     'solver_mode': solver_mode,

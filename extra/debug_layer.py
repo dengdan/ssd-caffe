@@ -1,8 +1,5 @@
 import caffe
 import numpy as np
-
-def cal(v):
-	return np.sqrt(np.sum(v*v))
 class DebugLayer(caffe.Layer):
     def setup(self, bottom, top):
         pass
@@ -14,11 +11,10 @@ class DebugLayer(caffe.Layer):
         import pdb
         pdb.set_trace()        
         data = bottom[0].data[...]
+        label = bottom[1].data[...]
         v = data[0, :, 0, 0]
         print cal(v) 
-        data = bottom[1].data[...]
-        v = data[0, :, 0, 0]
-        print cal(v) 
+        print label
 	
     def backward(self, top, propagate_down, bottom):
         pass
