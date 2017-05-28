@@ -9,6 +9,8 @@ import stat
 import subprocess
 import sys
 
+CONFIG_neg_overlap = 0.5
+
 # Add extra layers on top of a "base" network (e.g. VGGNet or Inception).
 def AddExtraLayers(net, use_batchnorm=True, lr_mult=1):
     use_relu = True
@@ -87,9 +89,9 @@ run_soon = True
 resume_training = True
 # If true, Remove old model files.
 remove_old_models = False
-gpus = sys.argv[1]
-batch_size = int(sys.argv[2])
-split = sys.argv[3]#'icdar2013'
+split = sys.argv[1]#'icdar2013'
+gpus = sys.argv[2]
+batch_size = int(sys.argv[3])
 train_data = "/home/dengdan/github/ssd-caffe/examples/icdar2013/%s_trainval_lmdb"%(split)
 # The database file for testing data. Created by data/icdar2013/create_data.sh
 test_data = "/home/dengdan/github/ssd-caffe/examples/icdar2013/icdar2013_test_lmdb"
@@ -246,7 +248,7 @@ else:
     base_lr = 0.00004
 
 # Modify the job name if you want.
-job_name = "SSD_{}".format(resize)
+job_name = "SSD_{}_on_{}_neg_overlap_{}".format(resize, split, CONFIG_neg_overlap)
 # The name of the model. Modify it if you want.
 model_name = "VGG_scene_text_{}".format(job_name)
 
@@ -260,7 +262,7 @@ job_dir = "jobs/VGGNet/scene_text/{}".format(job_name)
 output_result_dir = "{}/data/scene_text/results/{}".format(os.environ['HOME'], job_name)
 
 # model definition files.
-train_net_file = "{}/train{}.prototxt".format(save_dir, split)
+train_net_file = "{}/train_on_{}.prototxt".format(save_dir, split)
 test_net_file = "{}/test.prototxt".format(save_dir)
 deploy_net_file = "{}/deploy.prototxt".format(save_dir)
 solver_file = "{}/solver.prototxt".format(save_dir)
@@ -302,7 +304,7 @@ multibox_loss_param = {
     'use_difficult_gt': train_on_diff_gt,
     'mining_type': mining_type,
     'neg_pos_ratio': neg_pos_ratio,
-    'neg_overlap': 0.25,
+    'neg_overlap': CONFIG_neg_overlap,
     'code_type': code_type,
     'ignore_cross_boundary_bbox': ignore_cross_boundary_bbox,
     }
@@ -350,7 +352,7 @@ gpulist = gpus.split(",")
 num_gpus = len(gpulist)
 
 # Divide the mini-batch to different GPUs.
-accum_batch_size = 24
+accum_batch_size = 1
 iter_size = accum_batch_size / batch_size
 solver_mode = P.Solver.CPU
 device_id = 0
@@ -385,7 +387,7 @@ solver_param = {
     'momentum': 0.9,
     'iter_size': iter_size,
     'max_iter': 20000,
-    'snapshot': 2000,
+    'snapshot': 500,
     'display': 10,
     'average_loss': 10,
     'type': "SGD",
@@ -407,14 +409,6 @@ det_out_param = {
     'share_location': share_location,
     'background_label_id': background_label_id,
     'nms_param': {'nms_threshold': 0.45, 'top_k': 400},
-    'save_output_param': {
-        'output_directory': output_result_dir,
-        'output_name_prefix': "detections_minival_ssd512_results",
-        'output_format': "scene_text",
-        'label_map_file': label_map_file,
-        'name_size_file': name_size_file,
-        'num_test_image': num_test_image,
-        },
     'keep_top_k': 200,
     'confidence_threshold': 0.01,
     'code_type': code_type,
@@ -541,7 +535,7 @@ max_iter = 0
 for file in os.listdir(snapshot_dir):
   if file.endswith(".solverstate"):
     basename = os.path.splitext(file)[0]
-    iter = int(basename.split("{}_iter_".format(model_name))[1])
+    iter = int(basename.split("_iter_")[1])
     if iter > max_iter:
       max_iter = iter
 

@@ -1,5 +1,4 @@
 git add . -all
-i
-git commit -m "fix a bug in generating synthtext data"
+git commit -m "add test code"
 git push  origin ssd
 

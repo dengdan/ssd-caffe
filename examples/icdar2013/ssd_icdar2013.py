@@ -232,7 +232,7 @@ if use_batchnorm:
     base_lr = 0.0004
 else:
     # A learning rate for batch_size = 1, num_gpus = 1.
-    base_lr = 0.00001
+    base_lr = 0.00004
 # Modify the job name if you want.
 job_name = "SSD_{}".format(resize)
 # The name of the model. Modify it if you want.
@@ -368,12 +368,12 @@ solver_param = {
     'base_lr': base_lr,
     'weight_decay': 0.0005,
     'lr_policy': "multistep",
-    'stepvalue': [16000, 20000, 360000],
+    'stepvalue': [200000, 300000, 360000],
     'gamma': 0.1,
     'momentum': 0.9,
     'iter_size': iter_size,
+    'snapshot': 200,
     'max_iter': 120000,
-    'snapshot': 2000,
     'display': 10,
     'average_loss': 10,
     'type': "SGD",
